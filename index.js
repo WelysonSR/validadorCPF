@@ -1,48 +1,59 @@
 function global() {
 
-    function ValidaCPF(cpfEnviado) {
-        Object.defineProperty(this, 'cpfLimpo', {
-            enumerable: true,
-            get: function () {
-                return cpfEnviado.replace(/\D+/g, '');
+    class ValidaCPF {
+        constructor(cpfEnviado) {
+            Object.defineProperty(this, 'cpfLimpo', {
+                writable: false,
+                enumerable: true,
+                configurable: false,
+                value: cpfEnviado.replace(/\D+/g, '')
+            });
+        }
+
+        eSequencia() {
+            return this.cpfLimpo.charAt(0).repeat(this.cpfLimpo.length) === this.cpfLimpo;
+        }
+
+        geraNovoCpf(){
+            const cpfSemDigitos = this.cpfLimpo.slice(0, -2);
+            const digito1 = ValidaCPF.geraDigito(cpfSemDigitos);
+            const digito2 = ValidaCPF.geraDigito(cpfSemDigitos + digito1);
+
+            this.novoCPF = cpfSemDigitos + digito1 + digito2;
+        }
+
+        static geraDigito(cpfSemDigitos){
+            let total = 0;
+            let reverso = cpfSemDigitos.length + 1;
+
+            for(let stringNumero of cpfSemDigitos){
+                total += reverso * Number(stringNumero);
+                reverso--;
             }
-        })
+
+            const digito = 11 - (total % 11);
+            return digito <= 9 ? String(digito) : '0';
+
+        }
+
+        valida() {
+            if (!this.cpfLimpo) return false;
+            if (typeof this.cpfLimpo !== 'string') return false;
+            if (this.cpfLimpo.length !== 11) return false;
+            if (this.eSequencia()) return false;
+            this.geraNovoCpf();
+            return this.novoCPF === this.cpfLimpo;
+        }
     }
 
-    ValidaCPF.prototype.valida = function () {
-        if (typeof this.cpfLimpo === 'undefined') return false;
-        if (this.cpfLimpo.length !== 11) return false;
-        if (this.isSequencia()) return false;
+    let Validacpf = new ValidaCPF('070.987.720-03');
+    //Validacpf = new ValidaCPF('555.555.555-55');
 
-        const cpfParcial = this.cpfLimpo.slice(0, -2);
-        const digito1 = this.criaDigito(cpfParcial);
-        const digito2 = this.criaDigito(cpfParcial + digito1);
-
-        const novoCpf = cpfParcial + digito1 + digito2;
-
-        return novoCpf === this.cpfLimpo;
+    if(Validacpf.valida()){
+        console.log(`CPF Válido`);
+    } else {
+        console.log(`CPF Inválido`);
     }
-
-    ValidaCPF.prototype.criaDigito = function (cpfParcial) {
-        const cpfArray = Array.from(cpfParcial);
-        let regressivo = cpfArray.length + 1;
-        const total = cpfArray.reduce((ac, val)=>{            
-            ac += (regressivo * Number(val));
-            regressivo--;           
-            return ac;
-        }, 0);
-        
-        const digito = 11 - (total % 11);
-        return digito > 9 ? '0' : String(digito);
-    }
-
-    ValidaCPF.prototype.isSequencia = function(){
-        const sequencia = this.cpfLimpo[0].repeat(this.cpfLimpo.length);
-        return sequencia === this.cpfLimpo;
-    }
-
-    const cpf = new ValidaCPF('705.484.450-52');
-    console.log(cpf.valida())
 
 }
 global()
